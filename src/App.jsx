@@ -1,15 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Star, Heart, Gift } from 'lucide-react';
 
-
-const CountdownTimer = ({ onTimeReached }) => {
-  const targetDate = new Date('2025-02-11T00:00:00'); // Set target date to November 11, 2025
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetDate)); // Initialize timeLeft
-  const [showCountdown, setShowCountdown] = useState(true); // Controls visibility of the countdown
-
-  // Function to calculate time left
-  function calculateTimeLeft(targetDate) {
-    const difference = +new Date(targetDate) - +new Date(); // Difference in milliseconds
+const CountdownTimer = ({ targetDate, onTimeReached }) => {
+  const [timeLeft, setTimeLeft] = useState({});
+  const [heartbeat, setHeartbeat] = useState(false);
+  
+  const calculateTimeLeft = () => {
+    const difference = +new Date(targetDate) - +new Date();
     let timeLeft = {};
 
     if (difference > 0) {
@@ -17,27 +15,36 @@ const CountdownTimer = ({ onTimeReached }) => {
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
+        seconds: Math.floor((difference / 1000) % 60)
       };
+    } else {
+      onTimeReached();
     }
     return timeLeft;
-  }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(targetDate));
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    return () => clearInterval(timer);
+    const heartbeatTimer = setInterval(() => {
+      setHeartbeat(prev => !prev);
+    }, 500);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(heartbeatTimer);
+    };
   }, [targetDate]);
 
-  if (!showCountdown) return null; // Don't render anything when countdown is done
-
-  return (
+  return Object.keys(timeLeft).length ? (
     <div className="flex flex-col items-center justify-center space-y-8">
-      <Heart
-        size={48}
-        className="text-red-500 transition-transform duration-200 animate-pulse"
+      <Heart 
+        size={48} 
+        className={`text-red-500 transition-transform duration-200 ${
+          heartbeat ? 'scale-125' : 'scale-100'
+        }`}
         fill="currentColor"
       />
       <div className="flex flex-wrap justify-center gap-4">
@@ -53,7 +60,7 @@ const CountdownTimer = ({ onTimeReached }) => {
         ))}
       </div>
     </div>
-  );
+  ) : null;
 };
 
 const GiftBox = ({ onOpen }) => {
