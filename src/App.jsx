@@ -130,7 +130,7 @@ const FireworkRocket = ({ id, startX }) => (
 );
 
 const FireworkExplosion = ({ x, y }) => {
-  const particles = Array.from({ length: 60 }, (_, index) => ({
+  const particles = Array.from({ length: 70 }, (_, index) => ({
     id: `particle-${Date.now()}-${Math.random()}-${index}`,
   }));
   const colors = ['#FFD700', '#FF69B4', '#87CEEB', '#FF4500', '#9370DB', '#40E0D0', '#FF1493', '#00FF7F'];
@@ -201,49 +201,65 @@ const App = () => {
   const startCelebration = () => {
     setShowGift(true);
   };
+  useEffect(() => {
+    let fireworkInterval;
+    let butterflyInterval;
 
-  const handleGiftOpen = () => {
-    setShowContent(true);
-    
-    const launchFirework = () => {
-      const id = Date.now();
-      const startX = `${10 + Math.random() * 80}%`;
-      
-      setRockets(prev => [...prev, { id, startX }]);
-      
-      setTimeout(() => {
-        setExplosions(prev => [...prev, { id, x: startX, y: '20%' }]);
-        setRockets(prev => prev.filter(rocket => rocket.id !== id));
+    if (showContent) {
+      const launchFirework = () => {
+        const id = Date.now();
+        const startX = `${10 + Math.random() * 80}%`;
+        
+        setRockets(prev => {
+          // Limit rockets to 3 at a time
+          if (prev.length >= 3) return prev;
+          return [...prev, { id, startX }];
+        });
         
         setTimeout(() => {
-          setExplosions(prev => prev.filter(exp => exp.id !== id));
-        }, 2000);
-      }, 1000);
-    };
+          setExplosions(prev => [...prev, { id, x: startX, y: '20%' }]);
+          setRockets(prev => prev.filter(rocket => rocket.id !== id));
+          
+          setTimeout(() => {
+            setExplosions(prev => prev.filter(exp => exp.id !== id));
+          }, 2000);
+        }, 1000);
+      };
 
-    const addButterfly = () => {
-      const id = Date.now();
-      const x = `${Math.random() * 100}%`;
-      const y = `${Math.random() * 100}%`;
-      
-      setButterflies(prev => [...prev, { id, x, y }]);
-      setTimeout(() => {
-        setButterflies(prev => prev.filter(b => b.id !== id));
-      }, 10000);
-    };
+      const addButterfly = () => {
+        const id = Date.now();
+        const x = `${Math.random() * 100}%`;
+        const y = `${Math.random() * 100}%`;
+        
+        setButterflies(prev => {
+          // Limit butterflies to 5 at a time
+          if (prev.length >= 5) return prev;
+          return [...prev, { id, x, y }];
+        });
+        setTimeout(() => {
+          setButterflies(prev => prev.filter(b => b.id !== id));
+        }, 10000);
+      };
 
-    for (let i = 0; i < 10; i++) {
-      setTimeout(() => launchFirework(), i * 200);
-      setTimeout(() => addButterfly(), i * 500);
+      // Initial burst of fireworks and butterflies
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => launchFirework(), i * 500);
+        setTimeout(() => addButterfly(), i * 1000);
+      }
+
+      // Less frequent intervals after initial burst
+      fireworkInterval = setInterval(launchFirework, 5000);
+      butterflyInterval = setInterval(addButterfly, 7000);
     }
 
-    const fireworkInterval = setInterval(launchFirework, 2000);
-    const butterflyInterval = setInterval(addButterfly, 3000);
-    
     return () => {
       clearInterval(fireworkInterval);
       clearInterval(butterflyInterval);
     };
+  }, [showContent]);
+
+  const handleGiftOpen = () => {
+    setShowContent(true);
   };
 
   return (
